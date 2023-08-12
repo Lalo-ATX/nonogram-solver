@@ -70,12 +70,11 @@ const NonogramSolver = new function() {
   this.solveOneStep = () => {
     this.oneStepCount++;
     console.log("NonogramSolver.solveOneStep() called",this.oneStepCount);
-    var actionCount = 0;
 
     var solveOptions;
     var filterOptions;
 
-    if ( orientation[this.oneStepNext] == "col" ) {
+    if ( orientation[this.oneStepNext] === "col" ) {
       solveOptions  = this.optionsColumns;
       filterOptions = this.optionsRows;
     } else { // assume it's row
@@ -139,35 +138,35 @@ function solveSeries( optionsSeries, solutionGrid, seriesType ) {
     }
 
     for ( var j in aggregate ) {
-      if ( aggregate[j] == optionsCount ) {
-        if ( seriesType == "col" ) {
-          if ( solutionGrid[j][i] == squareUnknown ) {
+      if ( aggregate[j] === optionsCount ) {
+        if ( seriesType === "col" ) {
+          if ( solutionGrid[j][i] === squareUnknown ) {
             solvedCount++;
             solutionGrid[j][i] = squareFilled;
-/*          } else if ( solutionGrid[j][i] == squareEmpty ) {
+/*          } else if ( solutionGrid[j][i] === squareEmpty ) {
             console.log("tried to toggle empty square at",j,i) */
           }
-        } else if (seriesType == "row" ) {
-          if ( solutionGrid[i][j] == squareUnknown ) {
+        } else if (seriesType === "row" ) {
+          if ( solutionGrid[i][j] === squareUnknown ) {
             solvedCount++;
             solutionGrid[i][j] = squareFilled;
-/*          } else if ( solutionGrid[i][j] == squareEmpty ) {
+/*          } else if ( solutionGrid[i][j] === squareEmpty ) {
             console.log("tried to toggle empty square at",i,j); */
           }
         }
-      } else if ( aggregate[j] == 0 ) {
-        if ( seriesType == "col" ) {
-          if ( solutionGrid[j][i] == squareUnknown ) {
+      } else if ( aggregate[j] === 0 ) {
+        if ( seriesType === "col" ) {
+          if ( solutionGrid[j][i] === squareUnknown ) {
             solvedCount++;
             solutionGrid[j][i] = squareEmpty;
-/*          } else if ( solutionGrid[j][i] == squareFilled ) {
+/*          } else if ( solutionGrid[j][i] === squareFilled ) {
             console.log("tried to toggle filled square at",j,i); */
           }
-        } else if (seriesType == "row" ) {
-          if ( solutionGrid[i][j] == squareUnknown ) {
+        } else if (seriesType === "row" ) {
+          if ( solutionGrid[i][j] === squareUnknown ) {
             solvedCount++;
             solutionGrid[i][j] = squareEmpty;
-/*          } else if ( solutionGrid[i][j] == squareFilled ) {
+/*          } else if ( solutionGrid[i][j] === squareFilled ) {
             console.log("tried to toggle filled square at",i,j); */
           }
         }
@@ -183,14 +182,14 @@ function filterSeries( optionsSeries, solutionGrid, seriesType ) {
     const options = optionsSeries[i];
     for ( var j in options ) {
       for ( var k in options[j] ) {
-        const testField = seriesType == "row" ? solutionGrid[i][k] : solutionGrid[k][i];
-        if ( testField == squareUnknown ) {
+        const testField = seriesType === "row" ? solutionGrid[i][k] : solutionGrid[k][i];
+        if ( testField === squareUnknown ) {
           // compatible with anything
           continue;
         }
         // else
-        if ( (testField == squareFilled && options[j][k] == 0) ||
-             (testField == squareEmpty  && options[j][k] == 1)) {
+        if ( (testField === squareFilled && options[j][k] === 0) ||
+             (testField === squareEmpty  && options[j][k] === 1)) {
           // failed test, this option must be eliminated
           delete options[j];
           filteredCount++;
@@ -214,14 +213,14 @@ function genOptions( hintInputList, dimension, options ) {
   const numOfOptions = mySeriesLen - hintInput;
   for ( var i = 0; i <= numOfOptions; i++ ) {
     var thisOption = [ ...options, ...Array(i).fill(0), ...Array(hintInput).fill(1) ];
-    if ( hintList.length == 0 ) {
+    if ( hintList.length === 0 ) {
       // no more options, so zero pad it
       thisOption = [ ...thisOption, ...Array(dimension - i - hintInput).fill(0) ];
       returnOptions.push(thisOption);
     } else {
       thisOption.push(0);
       const recurseDimension = dimension - hintInput - 1 - i;
-      returnOptions = [ ...returnOptions, ...genOptions( hintList, dimension - hintInput - 1 - i, thisOption ) ];
+      returnOptions = [ ...returnOptions, ...genOptions( hintList, recurseDimension, thisOption ) ];
     }
   }
   return returnOptions;
