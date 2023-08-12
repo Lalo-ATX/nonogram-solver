@@ -3,7 +3,7 @@ const squareEmpty   = "⨉" // "x" // "⨉";
 const squareUnknown = " " // "_" // "▢";
 const maxLoops = 50;
 
-const orientation = ["col","row"];
+const orientation = ["row","col"];
 
 const NonogramSolver = new function() {
   this.optionsColumns = [];

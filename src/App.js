@@ -10,11 +10,11 @@ function App() {
   const initialDimension = NonogramSolver.gridDimension || defaultDimension;
 
   const initialRowHints = NonogramSolver.hintRows
-    ? NonogramSolver.hintRows.map(row => row.join(','))
+    ? NonogramSolver.hintRows.map(row => row.join(' '))
     : Array.from({ length: initialDimension }, () => "");
 
   const initialColHints = NonogramSolver.hintCols
-    ? NonogramSolver.hintCols.map(row => row.join(','))
+    ? NonogramSolver.hintCols.map(row => row.join(' '))
     : Array.from({ length: initialDimension }, () => "");
 
   const [nonogramInitialized, setNonogramInitialized] = useState(false);
@@ -49,16 +49,16 @@ function App() {
   };
 
   const solveNonogram = () => {
-    const parsedRowHints = rowHints.map(hint => hint.split(',').map(Number));
-    const parsedColHints = colHints.map(hint => hint.split(',').map(Number));
+    const parsedRowHints = rowHints.map(hint => hint.split(' ').map(Number));
+    const parsedColHints = colHints.map(hint => hint.split(' ').map(Number));
     NonogramSolver.initialize(parsedRowHints, parsedColHints); // Pass the dimension and parsed hints
     setData(NonogramSolver.solve());
   };
   
   const solveNonogramOneStep = () => {
     if ( !nonogramInitialized ) {
-      const parsedRowHints = rowHints.map(hint => hint.split(',').map(Number));
-      const parsedColHints = colHints.map(hint => hint.split(',').map(Number));
+      const parsedRowHints = rowHints.map(hint => hint.split(' ').map(Number));
+      const parsedColHints = colHints.map(hint => hint.split(' ').map(Number));
       NonogramSolver.initialize(parsedRowHints, parsedColHints); // Pass the dimension and parsed hints
       setNonogramInitialized(true);
     }
