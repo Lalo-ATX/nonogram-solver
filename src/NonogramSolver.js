@@ -1,6 +1,6 @@
 const squareFilled  = "️■" // "O" // "█" "▮" "■";
-const squareEmpty   = " " // "x" // "⨉";
-const squareUnknown = "?" // "_" // "▢";
+const squareEmpty   = "⨉" // "x" // "⨉";
+const squareUnknown = " " // "_" // "▢";
 const maxLoops = 50;
 
 const orientation = ["col","row"];
@@ -12,7 +12,7 @@ const NonogramSolver = new function() {
   // default hints, useful for testing
   this.hintRows = [
     [7],
-    [2,3],
+    [3,2],
     [2,2],
     [1,1,3,2],
     [2,1,2,1,2],
