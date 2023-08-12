@@ -64,6 +64,11 @@ function App() {
     }
     setData(NonogramSolver.solveOneStep());
   };
+  
+  const startOver = () => {
+    setData(Array.from({ length: dimension }, () => Array(dimension).fill(NonogramSolver.squareUnknown)));
+    setNonogramInitialized(false);
+  }
 
   return (
     <div>
@@ -71,6 +76,7 @@ function App() {
       <input type="number" value={dimension} onChange={handleDimensionChange} style={{width:35, textAlign:'right'}}/> 
       <button onClick={solveNonogramOneStep}>Solve Next</button>
       <button onClick={solveNonogram}>Solve All</button> 
+      <button onClick={startOver}>Reset</button>
       <Grid data={data} rowHints={rowHints} colHints={colHints} onRowHintChange={handleRowHintChange} onColHintChange={handleColHintChange} />
     </div>
   );
