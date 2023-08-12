@@ -9,13 +9,22 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
   const cellWidth = cellSize; // Set as needed
 
   const [editingColHint, setEditingColHint] = useState(null);
-  const inputRef = useRef(null);
+  const [editingRowHint, setEditingRowHint] = useState(null);
+  
+  const inputColRef = useRef(null);
+  const inputRowRef = useRef(null);
 
   useEffect(() => {
     if (editingColHint !== null) {
-      inputRef.current.focus();
+      inputColRef.current.focus();
     }
   }, [editingColHint]);
+  
+  useEffect(() => {
+    if (editingRowHint !== null) {
+      inputRowRef.current.focus();
+    }
+  }, [editingRowHint]);
 
   const renderColHint = (hint, index) => {
     const style = {
@@ -29,12 +38,13 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
     if (editingColHint === index) {
       return (
         <input
-          ref={inputRef}
+          ref={inputColRef}
           style={style}
           className="col-hint-input"
           value={hint}
           onChange={(e) => onColHintChange(index, e)}
-          onBlur={(e) => setEditingColHint(null)}
+          onBlur={() => setEditingColHint(null)}
+          onKeyDown={(e) => handleColHintKeyDown(e, index)}
         />
       );
     }
@@ -50,6 +60,48 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
       </div>
     );
   };
+
+  const renderRowHint = (hint, index) => {
+    if (editingRowHint === index) {
+      return (
+        <input
+          ref={inputRowRef}
+          className="row-hint-input"
+          value={hint}
+          onChange={(e) => onRowHintChange(index, e)}
+          onBlur={() => setEditingRowHint(null)}
+          onKeyDown={(e) => handleRowHintKeyDown(e, index)}
+        />
+      );
+    }
+
+    // Otherwise render a div with the hint text
+    return (
+      <div
+        className="row-hint-display"
+        onClick={() => setEditingRowHint(index)}
+      >
+        {hint}
+      </div>
+    );
+  };
+
+  const handleColHintKeyDown = (e, index) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const nextIndex = (index + ( e.shiftKey ? -1 + colHints.length : +1 )) % colHints.length;
+      setEditingColHint(nextIndex);
+    }
+  };
+
+  const handleRowHintKeyDown = (e, index) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const nextIndex = (index + ( e.shiftKey ? -1 + rowHints.length : +1 )) % rowHints.length;
+      setEditingRowHint(nextIndex);
+    }
+  };
+
   return (
     <div className="grid-container" style={{ position: 'relative' }}>
       <div className="col-hints" style={{ position: 'absolute', left: rowHintWidth, top: 2 }}>
@@ -58,13 +110,7 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
       <div className="grid">
         {data.map((row, rowIndex) => (
           <div key={rowIndex} className="row" style={{ position: 'absolute', left: 0, top: rowIndex * rowHeight + colHintHeight }}>
-            <input
-              type="text"
-              className="row-hint-input"
-              value={rowHints[rowIndex]}
-              onChange={(event) => onRowHintChange(rowIndex, event)}
-              placeholder="Enter row hints"
-            />
+            {renderRowHint(rowHints[rowIndex],rowIndex)}
             {row.map((cell, cellIndex) => (
               <div key={cellIndex} className="cell" style={{ position: 'absolute', left: cellIndex * cellWidth + rowHintWidth, top: 0 }}>
                 {cell}
