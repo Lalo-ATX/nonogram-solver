@@ -72,7 +72,7 @@ function App() {
 
   return (
     <div>
-      <label>Dimension: </label>
+      <label>Size: </label>
       <input type="number" value={dimension} onChange={handleDimensionChange} style={{width:35, textAlign:'right'}}/> 
       <button onClick={solveNonogramOneStep}>Solve Next</button>
       <button onClick={solveNonogram}>Solve All</button> 

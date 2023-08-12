@@ -3,13 +3,24 @@
   margin: 20px;
 }
 
+.col-hint-display {
+    width: 16px;
+    height: 74px;
+    border: 1px solid grey;
+    line-height: 15px;
+    padding: 5px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
 .col-hint-input {
-  width: 80px;
-  height: 22px;
-  text-align: right;
-  line-height: 80px;
-/*  writing-mode: vertical-rl; */
-  transform: rotate(90deg);
+    width: 74px;
+    height: 16px;
+    border: 1px solid cyan;
+    background-color: lightcyan;
+    z-index: 100;
 }
 
 .row-hint-input {
