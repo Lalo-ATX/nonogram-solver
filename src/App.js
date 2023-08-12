@@ -33,6 +33,7 @@ function App() {
     setDimension(newDimension);
     setData(Array.from({ length: newDimension }, () => Array(newDimension).fill(NonogramSolver.squareUnknown)));
     setRowHints(Array.from({ length: newDimension }, () => ""));
+    setColHints(Array.from({ length: newDimension }, () => ""));
   };
 
   const handleRowHintChange = (index, event) => {
