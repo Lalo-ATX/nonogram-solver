@@ -10,7 +10,8 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
 
   const [editingColHint, setEditingColHint] = useState(null);
   const [editingRowHint, setEditingRowHint] = useState(null);
-  
+  const [scaleFactor, setScaleFactor] = useState(1);
+
   const inputColRef = useRef(null);
   const inputRowRef = useRef(null);
 
@@ -25,6 +26,12 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
       inputRowRef.current.focus();
     }
   }, [editingRowHint]);
+
+  useEffect(() => {
+    updateScaleFactor();
+    window.addEventListener('resize', updateScaleFactor);
+    return () => window.removeEventListener('resize', updateScaleFactor);
+  }, []);
 
   const renderColHint = (hint, index) => {
     const style = {
@@ -102,8 +109,20 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
     }
   };
 
+  const updateScaleFactor = () => {
+    console.log("updateScaleFactor called");
+    const screenWidth = window.innerWidth;
+    const gridWidth = colHints.length * 28 + 86 + 44;
+    console.log("screenWidth",screenWidth,"gridWidth",gridWidth);
+    const scale = Math.min(1, screenWidth / gridWidth);
+    setScaleFactor(scale);
+  };
+
   return (
-    <div className="grid-container" style={{ position: 'relative' }}>
+    <div
+      className="grid-container"
+      style={{ position: 'relative', transform: `scale(${scaleFactor})` }}
+    >
       <div className="col-hints" style={{ position: 'absolute', left: rowHintWidth, top: 2 }}>
         {colHints.map(renderColHint)}
       </div>

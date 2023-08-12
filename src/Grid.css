@@ -4,11 +4,11 @@
 }
 
 .col-hint-display {
-    width: 16px;
-    height: 74px;
+    width: 14px;
+    height: 72px;
     border: 1px solid grey;
     line-height: 15px;
-    padding: 5px;
+    padding: 6px;
     text-align: center;
     display: flex;
     flex-direction: column;
