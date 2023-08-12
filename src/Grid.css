@@ -1,0 +1,26 @@
+.grid-container {
+  position: relative;
+}
+
+.col-hint-input {
+  width: 80px;
+  height: 22px;
+  text-align: right;
+  line-height: 80px;
+/*  writing-mode: vertical-rl; */
+  transform: rotate(90deg);
+}
+
+.row-hint-input {
+  text-align: right;
+  width: 80px;
+  height: 22px;
+}
+
+.cell {
+  width: 24px; /* Same width as col hint inputs */
+  height: 24px;
+  border: 1px solid grey;
+  padding: 1px;
+  text-align: center;
+}
