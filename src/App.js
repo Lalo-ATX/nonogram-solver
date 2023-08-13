@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Grid from './Grid';
 import NonogramSolver from './NonogramSolver';
 
-//var NonogramInitialized = false;
-
 function App() {
-  
   const defaultDimension = 15;
   const initialDimension = NonogramSolver.gridDimension || defaultDimension;
 
@@ -22,6 +19,9 @@ function App() {
   const [data, setData] = useState(Array.from({ length: dimension }, () => Array(dimension).fill(NonogramSolver.squareUnknown)));
   const [rowHints, setRowHints] = useState(initialRowHints);
   const [colHints, setColHints] = useState(initialColHints);
+
+  const solutionStepIndex = useRef(0);
+  const solutionsStepCount = useRef(0);
 
   useEffect(() => {
     // reset our initialized status if an input changes
@@ -48,35 +48,45 @@ function App() {
     setColHints(newColHints);
   };
 
-  const solveNonogram = () => {
+  const startOver = () => {
+    ensureInitialized();
+    solutionStepIndex.current = 0;
+    setData(NonogramSolver.solutionStepByIndex(solutionStepIndex.current));
+  };
+
+  const changeStep = (step) => {
+    ensureInitialized();
+    solutionStepIndex.current =
+      Math.max( Math.min( solutionStepIndex.current + step, solutionsStepCount.current - 1 ), 0 );
+    setData(NonogramSolver.solutionStepByIndex(solutionStepIndex.current));
+  };
+
+  const finalSolution = () => {
+    ensureInitialized();
+    solutionStepIndex.current = solutionsStepCount.current - 1;
+    setData(NonogramSolver.solutionStepByIndex(solutionStepIndex.current));
+  }
+
+  const ensureInitialized = () => {
+    if ( nonogramInitialized ) {
+      return;
+    }
+    // else ...
     const parsedRowHints = rowHints.map(hint => hint.split(' ').map(Number));
     const parsedColHints = colHints.map(hint => hint.split(' ').map(Number));
     NonogramSolver.initialize(parsedRowHints, parsedColHints); // Pass the dimension and parsed hints
-    setData(NonogramSolver.solve());
-  };
-  
-  const solveNonogramOneStep = () => {
-    if ( !nonogramInitialized ) {
-      const parsedRowHints = rowHints.map(hint => hint.split(' ').map(Number));
-      const parsedColHints = colHints.map(hint => hint.split(' ').map(Number));
-      NonogramSolver.initialize(parsedRowHints, parsedColHints); // Pass the dimension and parsed hints
-      setNonogramInitialized(true);
-    }
-    setData(NonogramSolver.solveOneStep());
-  };
-  
-  const startOver = () => {
-    setData(Array.from({ length: dimension }, () => Array(dimension).fill(NonogramSolver.squareUnknown)));
-    setNonogramInitialized(false);
+    solutionsStepCount.current = NonogramSolver.solutionsStepCount();
+    setNonogramInitialized(true);
   }
 
   return (
     <div>
       <label>Size: </label>
-      <input type="number" value={dimension} onChange={handleDimensionChange} style={{width:35, textAlign:'right'}}/> 
-      <button onClick={solveNonogramOneStep}>Solve Next</button>
-      <button onClick={solveNonogram}>Solve All</button> 
-      <button onClick={startOver}>Reset</button>
+      <input type="number" value={dimension} onChange={handleDimensionChange} style={{width:35, textAlign:'right'}}/>
+      <button onClick={() => changeStep(-1)}>Step Backward</button>
+      <button onClick={() => changeStep(+1)}>Step Forward</button>
+      <button onClick={finalSolution}>Finished Grid</button>
+      <button onClick={startOver}>Reset</button><div>Step #{solutionStepIndex.current} of {solutionsStepCount.current-1}</div>
       <Grid data={data} rowHints={rowHints} colHints={colHints} onRowHintChange={handleRowHintChange} onColHintChange={handleColHintChange} />
     </div>
   );

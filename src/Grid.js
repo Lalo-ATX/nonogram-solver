@@ -110,10 +110,9 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
   };
 
   const updateScaleFactor = () => {
-    console.log("updateScaleFactor called");
+//    console.log("updateScaleFactor called");
     const screenWidth = window.innerWidth;
     const gridWidth = colHints.length * 28 + 86 + 44;
-    console.log("screenWidth",screenWidth,"gridWidth",gridWidth);
     const scale = Math.min(1, screenWidth / gridWidth);
     setScaleFactor(scale);
   };

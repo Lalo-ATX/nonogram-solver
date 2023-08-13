@@ -3,8 +3,6 @@ const squareEmpty   = "⨉" // "x" // "⨉";
 const squareUnknown = " " // "_" // "▢";
 const maxLoops = 50;
 
-const orientation = ["row","col"];
-
 const NonogramSolver = new function() {
   this.optionsColumns = [];
   this.optionsRows = [];
@@ -47,53 +45,33 @@ const NonogramSolver = new function() {
   this.initialize = (hintRowsInput, hintColsInput) => {
     console.log("NonogramSolver.initialize() called");
 
-    const gridDimension = hintRowsInput.length;
-
     this.optionsColumns = [];
     this.optionsRows = [];
-    this.solutionGrid = Array.from({ length: gridDimension }, () => Array(gridDimension).fill(squareUnknown));
-    this.oneStepNext = 0;
-    this.oneStepCount = 0;
+    this.solutionGrid = Array.from({ length: hintRowsInput.length }, () => Array(hintColsInput.length).fill(squareUnknown));
+    this.solutionSequence = [copyGrid(this.solutionGrid)]; // every step of the solution; starting with blank
 
     // first generate all the possible options
     for ( var colNum in hintColsInput ) {
-      const options = genOptions( hintColsInput[colNum], gridDimension, [] );
+      const options = genOptions( hintColsInput[colNum], hintRowsInput.length, [] );
       this.optionsColumns.push( options );
     }
 
     for ( var rowNum in hintRowsInput ) {
-      const options = genOptions( hintRowsInput[rowNum], gridDimension, [] );
+      const options = genOptions( hintRowsInput[rowNum], hintColsInput.length, [] );
       this.optionsRows.push( options );
     }
+
+    // now solve it
+    this.solve();
   }
 
-  this.solveOneStep = () => {
-    this.oneStepCount++;
-    console.log("NonogramSolver.solveOneStep() called",this.oneStepCount);
-
-    var solveOptions;
-    var filterOptions;
-
-    if ( orientation[this.oneStepNext] === "col" ) {
-      solveOptions  = this.optionsColumns;
-      filterOptions = this.optionsRows;
-    } else { // assume it's row
-      solveOptions  = this.optionsRows;
-      filterOptions = this.optionsColumns;
-    }
-    
-    const solvedCount = solveSeries(solveOptions, this.solutionGrid, orientation[this.oneStepNext]);
-    console.log("solved",solvedCount,"cells via",orientation[this.oneStepNext]);
-
-    const filteredCount = filterSeries(filterOptions, this.solutionGrid, orientation[this.oneStepNext^1]);
-    console.log("filtered",filteredCount,orientation[this.oneStepNext^1]);
-
-    // toggle oneStepNext
-    this.oneStepNext ^= 1;
-
-    return this.solutionGridAnswer(); // return a copy, in case the calling code modifies it
+  this.solutionsStepCount = () => {
+    return this.solutionSequence.length;
   }
 
+  this.solutionStepByIndex = (solutionIndex) => {
+    return copyGrid(this.solutionSequence[solutionIndex]); // copy of this entry
+  }
 
   this.solve = () => {
     console.log("NonogramSolver.solve() called");
@@ -103,11 +81,21 @@ const NonogramSolver = new function() {
       loop++;
       actionCount = 0;
 
-      actionCount += solveSeries( this.optionsColumns, this.solutionGrid, "col");
-      actionCount += filterSeries(this.optionsRows,    this.solutionGrid, "row");
+      var solvedCount = 0;
 
-      actionCount += solveSeries( this.optionsRows,    this.solutionGrid, "row");
-      actionCount += filterSeries(this.optionsColumns, this.solutionGrid, "col");
+      solvedCount = solveSeries( this.optionsRows, this.solutionGrid, "row");
+      if ( solvedCount > 0 ) {
+        this.solutionSequence.push(copyGrid(this.solutionGrid));
+        actionCount += solvedCount;
+        actionCount += filterSeries(this.optionsColumns, this.solutionGrid, "col");
+      }
+
+      solvedCount = solveSeries(this.optionsColumns, this.solutionGrid, "col");
+      if ( solvedCount > 0 ) {
+        this.solutionSequence.push(copyGrid(this.solutionGrid));
+        actionCount += solvedCount;
+        actionCount += filterSeries(this.optionsRows, this.solutionGrid, "row");
+      }
 
       if ( loop >= maxLoops ) {
         console.log("maximum loops exceeded",maxLoops);
@@ -115,13 +103,13 @@ const NonogramSolver = new function() {
       }
     } while (actionCount > 0);
     console.log("solve finished after",loop,"loops, last loop performing",actionCount,"actions.")
-    return this.solutionGridAnswer(); // return a copy in case the calling code modifies it
   }
   
-  this.solutionGridAnswer = () => {
-    return this.solutionGrid.map(row => [...row]);
-  }
 }();
+
+function copyGrid (grid) {
+  return grid.map(row => [...row]);
+}
 
 function solveSeries( optionsSeries, solutionGrid, seriesType ) {
   var solvedCount = 0;
@@ -144,14 +132,14 @@ function solveSeries( optionsSeries, solutionGrid, seriesType ) {
             solvedCount++;
             solutionGrid[j][i] = squareFilled;
 /*          } else if ( solutionGrid[j][i] === squareEmpty ) {
-            console.log("tried to toggle empty square at",j,i) */
+            console.log("tried to toggle empty square at",j,i) */ // this should trigger an error that the grid is unsolveable
           }
         } else if (seriesType === "row" ) {
           if ( solutionGrid[i][j] === squareUnknown ) {
             solvedCount++;
             solutionGrid[i][j] = squareFilled;
 /*          } else if ( solutionGrid[i][j] === squareEmpty ) {
-            console.log("tried to toggle empty square at",i,j); */
+            console.log("tried to toggle empty square at",i,j); */ // unsolveable grid
           }
         }
       } else if ( aggregate[j] === 0 ) {
@@ -160,14 +148,14 @@ function solveSeries( optionsSeries, solutionGrid, seriesType ) {
             solvedCount++;
             solutionGrid[j][i] = squareEmpty;
 /*          } else if ( solutionGrid[j][i] === squareFilled ) {
-            console.log("tried to toggle filled square at",j,i); */
+            console.log("tried to toggle filled square at",j,i); */ // unsolveable grid
           }
         } else if (seriesType === "row" ) {
           if ( solutionGrid[i][j] === squareUnknown ) {
             solvedCount++;
             solutionGrid[i][j] = squareEmpty;
 /*          } else if ( solutionGrid[i][j] === squareFilled ) {
-            console.log("tried to toggle filled square at",i,j); */
+            console.log("tried to toggle filled square at",i,j); */ // unsolveable grid
           }
         }
       } // else, do nothing
@@ -287,4 +275,48 @@ export default NonogramSolver;
     [2,1,2],
     [7] ];
 
+// panda
+  this.hintRows = [
+3 3
+1 3 3 1
+3 10 2
+3 2 2 2
+5 4
+3 2
+1 1
+1 1
+2 1
+2 1 1 1
+3 3 3 1
+1 1 1 1 1 1 1
+1 1 3 3 1
+1 2 2 1
+1 2 2
+1 2 3 2
+1 2 3 3
+1 2 1 4
+1 1 2 4
+3 1 10
+
+  this.hintCols = [
+2 1 1 2
+1 1 1 1
+4 7 1
+1 4 4 2 1
+1 5 2 1
+2 2 2
+4 2
+3 4 1
+1 2 2 1
+1 3 1
+1 2 1
+1 3 1
+1 2 1
+1 3 1
+3 2 2 2
+5 4 3
+2 2 4
+1 5 5
+4 4 4
+4
 */
