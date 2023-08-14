@@ -4,7 +4,7 @@ import NonogramSolver from './NonogramSolver';
 
 function App() {
   const defaultDimension = 15;
-  const defaultHint = 1;
+  const defaultHint = 2;
 
   const initialDimension = NonogramSolver.hintRows[defaultHint].length || defaultDimension;
 
