@@ -4,14 +4,16 @@ import NonogramSolver from './NonogramSolver';
 
 function App() {
   const defaultDimension = 15;
-  const initialDimension = NonogramSolver.gridDimension || defaultDimension;
+  const defaultHint = 1;
 
-  const initialRowHints = NonogramSolver.hintRows
-    ? NonogramSolver.hintRows.map(row => row.join(' '))
+  const initialDimension = NonogramSolver.hintRows[defaultHint].length || defaultDimension;
+
+  const initialRowHints = NonogramSolver.hintRows[defaultHint]
+    ? NonogramSolver.hintRows[defaultHint].map(row => row.join(' '))
     : Array.from({ length: initialDimension }, () => "");
 
-  const initialColHints = NonogramSolver.hintCols
-    ? NonogramSolver.hintCols.map(row => row.join(' '))
+  const initialColHints = NonogramSolver.hintCols[defaultHint]
+    ? NonogramSolver.hintCols[defaultHint].map(row => row.join(' '))
     : Array.from({ length: initialDimension }, () => "");
 
   const [nonogramInitialized, setNonogramInitialized] = useState(false);
@@ -86,7 +88,8 @@ function App() {
       <button onClick={() => changeStep(-1)}>Step Backward</button>
       <button onClick={() => changeStep(+1)}>Step Forward</button>
       <button onClick={finalSolution}>Finished Grid</button>
-      <button onClick={startOver}>Reset</button><div>Step #{solutionStepIndex.current} of {solutionsStepCount.current-1}</div>
+      <button onClick={startOver}>Reset</button>
+      <div>Step {solutionStepIndex.current} of {nonogramInitialized ? solutionsStepCount.current-1 : "?"}</div><br />
       <Grid data={data} rowHints={rowHints} colHints={colHints} onRowHintChange={handleRowHintChange} onColHintChange={handleColHintChange} />
     </div>
   );

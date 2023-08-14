@@ -1,16 +1,59 @@
 import React, { useState, useRef, useEffect } from 'react';
-import './Grid.css';
+import styled from 'styled-components';
+
+const cellSize = 28;
+const cellBorder = 1;
+const cellBorderColor = 'lightgrey';
+const hintDisplayLength = 88;
+const hintDisplayPadding = 6;
+const hintDisplayBorder = 1;
+const hintDisplayBorderColor = 'lightgrey';
+const hintGridPadding = 2;
+
+const ColHintDisplay = styled.div`
+  width: ${cellSize - 2*hintDisplayBorder - 2*hintDisplayPadding}px;
+  height: ${hintDisplayLength - 2*hintDisplayBorder - 2*hintDisplayPadding}px;
+  border: ${hintDisplayBorder}px solid ${hintDisplayBorderColor};
+  line-height: 14px; // line height is related to font size
+  padding: ${hintDisplayPadding}px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  font-size: small;`;
+
+const RowHintDisplay = styled.div`
+  text-align: right;
+  width: ${hintDisplayLength - 2*hintDisplayBorder - 1*hintDisplayPadding}px;
+  height: ${cellSize - 2*hintDisplayBorder}px;
+  line-height: ${cellSize - 2*hintDisplayBorder}px;
+  padding-right: ${hintDisplayPadding}px;
+  border: ${hintDisplayBorder}px solid ${hintDisplayBorderColor};
+  font-size: small;`
+
+const HintInput = styled.input`
+  width: ${hintDisplayLength - 2*hintDisplayBorder - 1*hintDisplayPadding}px;
+  height: ${cellSize - 2*hintDisplayPadding}px;
+  line-height: ${cellSize - 2*hintDisplayBorder - 2*hintDisplayPadding}px;
+  background-color: lightcyan;
+  border-color: cyan;
+  text-align: center;
+  z-index: 100;`;
+
+const Cell = styled.div`
+  width: ${cellSize - 2*cellBorder}px;
+  height: ${cellSize - 2*cellBorder}px;
+  border: ${cellBorder}px solid ${cellBorderColor};
+  text-align: center;
+  line-height: ${cellSize - 2*cellBorder}px;`
 
 function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
-  const cellSize = 27;
-  const rowHeight = cellSize; // Set as needed
-  const rowHintWidth = 90; // Set as needed
-  const colHintHeight = 90; // Set as needed
-  const cellWidth = cellSize; // Set as needed
 
   const [editingColHint, setEditingColHint] = useState(null);
   const [editingRowHint, setEditingRowHint] = useState(null);
   const [scaleFactor, setScaleFactor] = useState(1);
+  const [gridPosX, setGridPosX ] = useState(0);
+  const [gridPosY, setGridPosY ] = useState(0);
 
   const inputColRef = useRef(null);
   const inputRowRef = useRef(null);
@@ -28,26 +71,24 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
   }, [editingRowHint]);
 
   useEffect(() => {
-    updateScaleFactor();
-    window.addEventListener('resize', updateScaleFactor);
-    return () => window.removeEventListener('resize', updateScaleFactor);
-  }, []);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  });
 
   const renderColHint = (hint, index) => {
     const style = {
       position: 'absolute',
-      top: `${(colHintHeight-cellSize)/2}px`,
-      left: `${index * cellWidth - (rowHintWidth-cellWidth)/2}px`, // Adjust as needed
-      width: rowHintWidth,
-      textAlign: 'center'
+      top: `${(hintDisplayLength-cellSize)/2}px`,
+      left: `${index * (cellSize-cellBorder) - (hintDisplayLength-(cellSize-cellBorder))/2}px` // Adjust as needed
     };
     // If this hint is being edited, render an input field
     if (editingColHint === index) {
       return (
-        <input
+        <HintInput
+          key={index}
           ref={inputColRef}
           style={style}
-          className="col-hint-input"
           value={hint}
           onChange={(e) => onColHintChange(index, e)}
           onBlur={() => setEditingColHint(null)}
@@ -58,22 +99,21 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
 
     // Otherwise, render a div with the hint text
     return (
-      <div
-        style={{position: 'absolute', top: 0, left: `${index * cellWidth}px`}}
-        className="col-hint-display"
+      <ColHintDisplay
+        key={index}
+        style={{position: 'absolute', top: 0, left: `${index * (cellSize-cellBorder)}px`}}
         onClick={() => setEditingColHint(index)}
       >
         {hint}
-      </div>
+      </ColHintDisplay>
     );
   };
 
   const renderRowHint = (hint, index) => {
     if (editingRowHint === index) {
       return (
-        <input
+        <HintInput
           ref={inputRowRef}
-          className="row-hint-input"
           value={hint}
           onChange={(e) => onRowHintChange(index, e)}
           onBlur={() => setEditingRowHint(null)}
@@ -84,12 +124,11 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
 
     // Otherwise render a div with the hint text
     return (
-      <div
-        className="row-hint-display"
+      <RowHintDisplay
         onClick={() => setEditingRowHint(index)}
       >
         {hint}
-      </div>
+      </RowHintDisplay>
     );
   };
 
@@ -109,30 +148,37 @@ function Grid({ data, rowHints, colHints, onRowHintChange, onColHintChange }) {
     }
   };
 
-  const updateScaleFactor = () => {
-//    console.log("updateScaleFactor called");
+  const handleResize = () => {
+    const minPadding = 30;
     const screenWidth = window.innerWidth;
-    const gridWidth = colHints.length * 28 + 86 + 44;
-    const scale = Math.min(1, screenWidth / gridWidth);
+    const screenHeight = window.innerHeight;
+    const gridWidth = hintDisplayLength + hintGridPadding + colHints.length*(cellSize - cellBorder);
+    const widthScale = Math.min(1, screenWidth / (gridWidth + 2*minPadding));
+    const heightScale = Math.min(1, screenHeight / (gridWidth + 2*minPadding));
+    const scale = Math.min(widthScale, heightScale);
     setScaleFactor(scale);
+    const newGridWidth = gridWidth * scale;
+    setGridPosX( (screenWidth  - newGridWidth)/2 );
+    setGridPosY( (screenHeight - newGridWidth)/2 );
+//    console.log("scale",scale,"scale factor",scaleFactor,"grid X Y", gridPosX, gridPosY);
   };
 
   return (
     <div
       className="grid-container"
-      style={{ position: 'relative', transform: `scale(${scaleFactor})` }}
+      style={{ position: 'absolute', left: gridPosX, top: gridPosY, transform: `scale(${scaleFactor})` }}
     >
-      <div className="col-hints" style={{ position: 'absolute', left: rowHintWidth, top: 2 }}>
+      <div className="col-hints" style={{ position: 'absolute', left: hintDisplayLength+hintGridPadding }}>
         {colHints.map(renderColHint)}
       </div>
       <div className="grid">
         {data.map((row, rowIndex) => (
-          <div key={rowIndex} className="row" style={{ position: 'absolute', left: 0, top: rowIndex * rowHeight + colHintHeight }}>
+          <div key={rowIndex} className="row" style={{ position: 'absolute', left: 0, top: rowIndex * (cellSize-cellBorder) + hintDisplayLength + hintGridPadding }}>
             {renderRowHint(rowHints[rowIndex],rowIndex)}
             {row.map((cell, cellIndex) => (
-              <div key={cellIndex} className="cell" style={{ position: 'absolute', left: cellIndex * cellWidth + rowHintWidth, top: 0 }}>
+              <Cell key={cellIndex} style={{ position: 'absolute', left: cellIndex * (cellSize-cellBorder) + hintDisplayLength+hintGridPadding, top: 0 }}>
                 {cell}
-              </div>
+              </Cell>
             ))}
           </div>
         ))}
