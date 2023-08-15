@@ -1,95 +1,185 @@
 const squareFilled  = "️■" // "O" // "█" "▮" "■";
 const squareEmpty   = "⨉" // "x" // "⨉";
 const squareUnknown = " " // "_" // "▢";
-const maxLoops = 50;
+const maxLoops = 100;
 
 const NonogramSolver = new function() {
-  this.optionsColumns = [];
-  this.optionsRows = [];
+  this.solutionStatus = "unsolved";
 
   // default hints, useful for testing
   this.hintRows = [
     [ [1,2,1], [2,1,1,3], [3,2,2], [3,1], [3,1,1], [3,5], [1,6], [3], [3,1], [1] ],
     [ [7], [3,2], [2,2], [1,1,3,2], [2,1,2,1,2], [1,1,1,1,1,1], [1,2,2,1], [1,2,3,2,1], [1,1,2], [4,1,1], [2,8,2], [1,1,2,2], [3,1], [3,3], [6] ],
-    [ [3,3], [1,3,3,1], [3,10,2], [3,2,2,2], [5,4], [3,2], [1,1], [1,1], [2,1], [2,1,1,1], [3,3,3,1], [1,1,1,1,1,1,1], [1,1,3,3,1], [1,2,2,1], [1,2,2], [1,2,3,2], [1,2,3,3], [1,2,1,4], [1,1,2,4], [3,1,10] ]
+    [ [3,3], [1,3,3,1], [3,10,2], [3,2,2,2], [5,4], [3,2], [1,1], [1,1], [2,1], [2,1,1,1], [3,3,3,1], [1,1,1,1,1,1,1], [1,1,3,3,1], [1,2,2,1], [1,2,2], [1,2,3,2], [1,2,3,3], [1,2,1,4], [1,1,2,4], [3,1,10] ],
+    [ [1], [1,2], [2,4], [7], [1,3], [2,1], [2,1], [1,1,1], [1,1,1], [2,2,1] ]
   ];
 
   this.hintCols = [
     [ [5,2], [6,1], [5,1], [2], [1,1,1], [2,3], [5], [1,3], [2,2], [7] ],
     [ [7], [3,4], [2,1,1,1,1], [1,1,1,2], [2,1,1,1], [1,3,1,2,2], [1,1,2,1,1], [1,1,1,1,1], [1,2,2,2,1], [1,3,2,2], [2,1,1,2], [2,2,1,1,1], [2,1,2], [2,1,2], [7] ],
-    [ [2,1,1,2], [1,1,1,1], [4,7,1], [1,4,4,2,1], [1,5,2,1], [2,2,2], [4,2], [3,4,1], [1,2,2,1], [1,3,1], [1,2,1], [1,3,1], [1,2,1], [1,3,1], [3,2,2,2], [5,4,3], [2,2,4], [1,5,5], [4,4,4], [4] ]
+    [ [2,1,1,2], [1,1,1,1], [4,7,1], [1,4,4,2,1], [1,5,2,1], [2,2,2], [4,2], [3,4,1], [1,2,2,1], [1,3,1], [1,2,1], [1,3,1], [1,2,1], [1,3,1], [3,2,2,2], [5,4,3], [2,2,4], [1,5,5], [4,4,4], [4] ],
+    [ [1,2,3], [2,2,1], [1,2,2], [3,2], [2,1,1], [1,2], [2,1], [2], [2], [3] ]
   ];
 
   this.initialize = (hintRowsInput, hintColsInput) => {
     console.log("NonogramSolver.initialize() called");
 
-    this.optionsColumns = [];
-    this.optionsRows = [];
-    this.solutionGrid = Array.from({ length: hintRowsInput.length }, () => Array(hintColsInput.length).fill(squareUnknown));
-    this.solutionSequence = [copyGrid(this.solutionGrid)]; // every step of the solution; starting with blank
+    const allOptions = {
+      rows: [],
+      cols: []
+    };
+
+    const solutionGrid = Array.from({ length: hintRowsInput.length }, () => Array(hintColsInput.length).fill(squareUnknown));
+    this.solutionSequence = [copyGrid(solutionGrid)]; // every step of the solution; starting with blank
 
     // first generate all the possible options
     for ( var colNum in hintColsInput ) {
       const options = genOptions( hintColsInput[colNum], hintRowsInput.length, [] );
-      this.optionsColumns.push( options );
+      allOptions.cols.push( options );
     }
 
     for ( var rowNum in hintRowsInput ) {
       const options = genOptions( hintRowsInput[rowNum], hintColsInput.length, [] );
-      this.optionsRows.push( options );
+      allOptions.rows.push( options );
     }
 
     // now solve it
-    this.solve();
+    this.solutionStatus = solveGrid(allOptions, solutionGrid, this.solutionSequence)
   }
 
   this.solutionsStepCount = () => {
     return this.solutionSequence.length;
   }
 
-  this.solutionStepByIndex = (solutionIndex) => {
-    return copyGrid(this.solutionSequence[solutionIndex]); // copy of this entry
+  this.solutionStepByIndex = (stepIndex) => {
+    return copyGrid(this.solutionSequence[stepIndex]); // copy of this entry
   }
 
-  this.solve = () => {
-    console.log("NonogramSolver.solve() called");
-    var actionCount = 0;
-    var loop = 0;
-    do {
-      loop++;
-      actionCount = 0;
-
-      var solvedCount = 0;
-
-      solvedCount = solveSeries( this.optionsRows, this.solutionGrid, "row");
-      if ( solvedCount > 0 ) {
-        this.solutionSequence.push(copyGrid(this.solutionGrid));
-        actionCount += solvedCount;
-        actionCount += filterSeries(this.optionsColumns, this.solutionGrid, "col");
-      }
-
-      solvedCount = solveSeries(this.optionsColumns, this.solutionGrid, "col");
-      if ( solvedCount > 0 ) {
-        this.solutionSequence.push(copyGrid(this.solutionGrid));
-        actionCount += solvedCount;
-        actionCount += filterSeries(this.optionsRows, this.solutionGrid, "row");
-      }
-
-      if ( loop >= maxLoops ) {
-        console.log("maximum loops exceeded",maxLoops);
-        break;
-      }
-    } while (actionCount > 0);
-    console.log("solve finished after",loop,"loops, last loop performing",actionCount,"actions.")
-  }
-  
 }();
+
+function solveGrid(options, solutionGrid, solutionSequence) {
+  console.log("NonogramSolver.solve() called");
+  var loop = 0;
+  do {
+    loop++;
+    var actionCount = 0;
+
+    var solveResponse = solveSeries( options.rows, solutionGrid, "row");
+    if ( solveResponse.errorCells > 0 ) {
+      return "unsolveable";
+    }
+    if ( solveResponse.solvedCells > 0 ) {
+      solutionSequence.push(copyGrid(solutionGrid));
+      actionCount += solveResponse.solvedCells;
+      const filterResponse = filterSeries(options.cols, solutionGrid, "col");
+      if ( filterResponse.errors > 0 ) {
+        return "unsolveable";
+      }
+      actionCount += filterResponse.filteredOptions;
+    }
+
+    solveResponse = solveSeries(options.cols, solutionGrid, "col");
+    if ( solveResponse.errorCells > 0 ) {
+      return "unsolveable";
+    }
+    if ( solveResponse.solvedCells > 0 ) {
+      solutionSequence.push(copyGrid(solutionGrid));
+      actionCount += solveResponse.solvedCells;
+      const filterResponse = filterSeries(options.rows, solutionGrid, "row");
+      if ( filterResponse.errors > 0 ) {
+        return "unsolveable";
+      }
+      actionCount += filterResponse.filteredOptions;
+    }
+
+    if ( loop >= maxLoops ) {
+      console.log("Error: maximum loops exceeded",maxLoops);
+      break;
+    }
+  } while (actionCount > 0);
+  
+  const isSolved = checkIfSolved( solutionGrid );
+  
+  if ( isSolved ) {
+    console.log("nonogram solved after",loop,"loops");
+    return "solved";
+  } // else this is unsolved. Now we start probing.
+//  console.log("nonogram NOT solved after",loop,"loops");
+
+  const probeOption = genProbeOption( options );
+  
+//  console.log("generated probe option",probeOption);
+
+//  console.log("all options in this probe",probeOption.direction,probeOption.index,":",options[probeOption.direction][probeOption.index]);
+  for ( const sequenceOption of options[probeOption.direction][probeOption.index] ) {
+    if ( sequenceOption === undefined ) { // for ... of is supposed to skip undefined entries
+      continue; // this shouldn't be happening, but it is, so we handle it
+    }
+    const subOptions = copyOptions( options );
+    subOptions[probeOption.direction][probeOption.index] = [ sequenceOption ];
+    const subSolutionSequence = [];
+    const subSolutionGrid = copyGrid( solutionGrid );
+//    console.log("calling sub solveGrid replacing",probeOption.direction,probeOption.index,"with",sequenceOption);
+    const response = solveGrid( subOptions, subSolutionGrid, subSolutionSequence );
+    if ( response === "solved" ) {
+      // copy subSolutionGrid into solutionGrid -- OR NOT? THIS IS SOLVED, WHY DO I CARE?
+      for ( var i in solutionGrid ) {
+        for ( var j in solutionGrid[i] ) {
+          solutionGrid[i][j] = subSolutionGrid[i][j];
+        }
+      }
+      // append subSolutionSequence to solutionSequence
+      solutionSequence.push(...subSolutionSequence);
+      return "solved";
+    }
+    // presumably response === unsolveable, try the next option for this sequence
+  }
+  return "unsolveable"
+}
+
+function copyOptions( options ) {
+  return {
+    rows: options.rows.map(row => row.map(subRow => [...subRow])),
+    cols: options.cols.map(col => col.map(subCol => [...subCol]))
+  }
+}
+
+function genProbeOption( options ) {
+  const probeOptions = [];
+  for ( var direction in options ) {
+    for ( var i in options[direction] ) {
+      const entries = countEntries( options[direction][i] );
+      if ( entries > 1 ) {
+        probeOptions.push( {
+          direction: direction,
+          index: i,
+          optionsCount: entries
+        } );
+      }
+    }
+  }
+  return probeOptions.sort( (a,b) => { return a.optionsCount - b.optionsCount || a.index - b.index; } )[0]; // all we care about is the #1 entry
+}
+
+function checkIfSolved( solutionGrid ) {
+  var isSolved = true; // assume it's solved unless it's not
+  rowLoop: for ( const row of solutionGrid ) {
+    for ( const cell of row ) {
+      if ( cell === squareUnknown ) {
+        isSolved = false;
+        break rowLoop;
+      }
+    }
+  }
+  return isSolved;
+}
 
 function copyGrid (grid) {
   return grid.map(row => [...row]);
 }
 
 function solveSeries( optionsSeries, solutionGrid, seriesType ) {
+  var errorCount = 0;
   var solvedCount = 0;
   for ( var i in optionsSeries ) {
     const options = optionsSeries[i]; // this is a reference
@@ -109,15 +199,17 @@ function solveSeries( optionsSeries, solutionGrid, seriesType ) {
           if ( solutionGrid[j][i] === squareUnknown ) {
             solvedCount++;
             solutionGrid[j][i] = squareFilled;
-/*          } else if ( solutionGrid[j][i] === squareEmpty ) {
-            console.log("tried to toggle empty square at",j,i) */ // this should trigger an error that the grid is unsolveable
+          } else if ( solutionGrid[j][i] === squareEmpty ) {
+            errorCount ++;
+//            console.log("Error: tried to toggle empty square at",j,i) // this should trigger an error that the grid is unsolveable
           }
         } else if (seriesType === "row" ) {
           if ( solutionGrid[i][j] === squareUnknown ) {
             solvedCount++;
             solutionGrid[i][j] = squareFilled;
-/*          } else if ( solutionGrid[i][j] === squareEmpty ) {
-            console.log("tried to toggle empty square at",i,j); */ // unsolveable grid
+          } else if ( solutionGrid[i][j] === squareEmpty ) {
+            errorCount ++;
+//            console.log("Error: tried to toggle empty square at",i,j); // unsolveable grid
           }
         }
       } else if ( aggregate[j] === 0 ) {
@@ -125,25 +217,28 @@ function solveSeries( optionsSeries, solutionGrid, seriesType ) {
           if ( solutionGrid[j][i] === squareUnknown ) {
             solvedCount++;
             solutionGrid[j][i] = squareEmpty;
-/*          } else if ( solutionGrid[j][i] === squareFilled ) {
-            console.log("tried to toggle filled square at",j,i); */ // unsolveable grid
+          } else if ( solutionGrid[j][i] === squareFilled ) {
+            errorCount ++;
+//            console.log("Error: tried to toggle filled square at",j,i); // unsolveable grid
           }
         } else if (seriesType === "row" ) {
           if ( solutionGrid[i][j] === squareUnknown ) {
             solvedCount++;
             solutionGrid[i][j] = squareEmpty;
-/*          } else if ( solutionGrid[i][j] === squareFilled ) {
-            console.log("tried to toggle filled square at",i,j); */ // unsolveable grid
+          } else if ( solutionGrid[i][j] === squareFilled ) {
+            errorCount ++;
+//            console.log("tried to toggle filled square at",i,j); // unsolveable grid
           }
         }
       } // else, do nothing
     }
   }
-  return solvedCount;
+  return {solvedCells:solvedCount, errorCells:errorCount};
 }
 
 function filterSeries( optionsSeries, solutionGrid, seriesType ) {
   var filteredCount = 0;
+  var errorCount = 0;
   for ( var i in optionsSeries ) {
     const options = optionsSeries[i];
     for ( var j in options ) {
@@ -157,14 +252,25 @@ function filterSeries( optionsSeries, solutionGrid, seriesType ) {
         if ( (testField === squareFilled && options[j][k] === 0) ||
              (testField === squareEmpty  && options[j][k] === 1)) {
           // failed test, this option must be eliminated
-          delete options[j];
-          filteredCount++;
+          if ( countEntries(options[j]) === 1 ) {
+            console.log("Error: attempt to eliminate the last remaining option for",seriesType,i);
+            errorCount++;
+          } else {
+            delete options[j];
+            filteredCount++;
+          }
           break;
         }
       }
     }
   }
-  return filteredCount
+  return {filteredOptions:filteredCount, errors:errorCount};
+}
+
+function countEntries(array) {
+  return array.reduce((acc, value) => {
+    return value !== undefined ? acc + 1 : acc;
+  }, 0);
 }
 
 function genOptions( hintInputList, dimension, options ) {
