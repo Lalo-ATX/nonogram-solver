@@ -4,7 +4,9 @@ import NonogramSolver from './NonogramSolver';
 
 function App() {
   const defaultDimension = 15;
-  const defaultHint = 2;
+  const params = new URLSearchParams(window.location.search);
+  const defaultHint = params.get('hintSet') || 2;
+  
 
   const initialDimension = NonogramSolver.hintRows[defaultHint].length || defaultDimension;
 
@@ -24,10 +26,12 @@ function App() {
 
   const solutionStepIndex = useRef(0);
   const solutionsStepCount = useRef(0);
+  const solutionStatus = useRef(NonogramSolver.solutionStatus);
 
   useEffect(() => {
     // reset our initialized status if an input changes
     setNonogramInitialized(false);
+    solutionStatus.current = "unsolved";
   }, [dimension, rowHints, colHints]);
 
   const handleDimensionChange = (event) => {
@@ -77,7 +81,9 @@ function App() {
     const parsedRowHints = rowHints.map(hint => hint.split(' ').map(Number));
     const parsedColHints = colHints.map(hint => hint.split(' ').map(Number));
     NonogramSolver.initialize(parsedRowHints, parsedColHints); // Pass the dimension and parsed hints
+    solutionStepIndex.current = 0;
     solutionsStepCount.current = NonogramSolver.solutionsStepCount();
+    solutionStatus.current = NonogramSolver.solutionStatus;
     setNonogramInitialized(true);
   }
 
@@ -89,7 +95,8 @@ function App() {
       <button onClick={() => changeStep(+1)}>Step Forward</button>
       <button onClick={finalSolution}>Finished Grid</button>
       <button onClick={startOver}>Reset</button>
-      <div>Step {solutionStepIndex.current} of {nonogramInitialized ? solutionsStepCount.current-1 : "?"}</div><br />
+      <div>Step {solutionStepIndex.current} of {nonogramInitialized ? solutionsStepCount.current-1 : "?"}</div>
+      <div>{solutionStatus.current}</div>
       <Grid data={data} rowHints={rowHints} colHints={colHints} onRowHintChange={handleRowHintChange} onColHintChange={handleColHintChange} />
     </div>
   );
